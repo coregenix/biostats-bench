@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bench Stats — Mean · SD · SEM</title>
+<style>
+  :root{
+    --paper:#f6f3ec;
+    --paper-line:#e3ddc9;
+    --ink:#1f2e2a;
+    --ink-soft:#5c6b63;
+    --moss:#3f6b53;
+    --moss-dark:#2c4d3c;
+    --coral:#c1592f;
+    --card:#fffdf8;
+    --mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    --serif: "Source Serif 4", "Iowan Old Style", Georgia, serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--paper-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--paper-line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink);
+    font-family: var(--serif);
+    min-height:100vh;
+    padding: 36px 18px 80px;
+  }
+  .wrap{max-width:880px;margin:0 auto;}
+  header{
+    border-bottom: 2px solid var(--ink);
+    padding-bottom:18px;
+    margin-bottom:28px;
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--moss-dark);
+    margin-bottom:6px;
+  }
+  h1{
+    font-size:32px;
+    margin:0 0 8px;
+    font-weight:650;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:15px;
+    max-width:560px;
+  }
+  .bench{
+    background:var(--card);
+    border:1px solid var(--paper-line);
+    border-radius:4px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+    padding:24px;
+    margin-bottom:22px;
+  }
+  .group{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    padding:14px 0;
+    border-bottom:1px dashed var(--paper-line);
+  }
+  .group:last-of-type{border-bottom:none;}
+  .tag{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-soft);
+    width:34px;
+    padding-top:11px;
+    flex-shrink:0;
+  }
+  .group-fields{flex:1;}
+  .group-fields input[type=text]{
+    font-family:var(--serif);
+    font-size:15px;
+    font-weight:600;
+    border:none;
+    background:transparent;
+    border-bottom:1px solid transparent;
+    padding:4px 2px;
+    width:100%;
+    color:var(--ink);
+    margin-bottom:6px;
+  }
+  .group-fields input[type=text]:focus{
+    outline:none;
+    border-bottom:1px solid var(--moss);
+  }
+  textarea{
+    width:100%;
+    font-family:var(--mono);
+    font-size:14.5px;
+    color:var(--ink);
+    border:1px solid var(--paper-line);
+    border-radius:3px;
+    padding:9px 10px;
+    resize:vertical;
+    min-height:42px;
+    background:#fdfcf8;
+  }
+  textarea:focus{outline:none;border-color:var(--moss);}
+  .remove-btn{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--coral);
+    background:none;
+    border:1px solid transparent;
+    cursor:pointer;
+    padding:11px 4px 0 0;
+    flex-shrink:0;
+  }
+  .remove-btn:hover{text-decoration:underline;}
+  .add-row{
+    margin-top:16px;
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--moss-dark);
+    background:none;
+    border:1px solid var(--moss);
+    border-radius:3px;
+    padding:8px 14px;
+    cursor:pointer;
+  }
+  .add-row:hover{background:rgba(63,107,83,0.08);}
+
+  .results{margin-top:6px;}
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14.5px;
+  }
+  thead th{
+    text-align:left;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    border-bottom:2px solid var(--ink);
+    padding:8px 10px;
+  }
+  tbody td{
+    padding:11px 10px;
+    border-bottom:1px solid var(--paper-line);
+    vertical-align:top;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  .group-name{font-weight:650;}
+  .entry{font-family:var(--mono); font-weight:700; font-size:16px; color:var(--moss-dark);}
+  .entry .pm{color:var(--coral); margin:0 4px;}
+  .copy-btn{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-soft);
+    background:none;
+    border:1px solid var(--paper-line);
+    border-radius:3px;
+    padding:4px 8px;
+    cursor:pointer;
+    margin-left:8px;
+  }
+  .copy-btn:hover{border-color:var(--moss); color:var(--moss-dark);}
+  .work{
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:var(--ink-soft);
+    line-height:1.6;
+    white-space:pre-wrap;
+  }
+  .empty{color:var(--ink-soft); font-size:13px; font-style:italic;}
+  details summary{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--moss-dark);
+    cursor:pointer;
+  }
+  footer{
+    margin-top:30px;
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-soft);
+    text-align:center;
+    line-height:1.8;
+  }
+  footer .credit{
+    font-size:10.5px;
+    opacity:0.65;
+  }
+  @media (max-width:560px){
+    .group{flex-direction:column;}
+    .tag{width:auto;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Bench notebook · biostatistics</div>
+    <h1>Mean · SD · SEM</h1>
+    <p>Paste raw values for each group — one per line or comma-separated. Every group computes live, with the working shown step by step, ready to drop into a results table.</p>
+  </header>
+
+  <div class="bench" id="groups"></div>
+  <button class="add-row" id="addGroup">+ add group</button>
+
+  <div class="bench results" id="resultsBench" style="display:none;">
+    <table>
+      <thead>
+        <tr><th>Group</th><th>n</th><th>Table entry (mean ± SEM)</th><th></th></tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+
+  <footer>sample SD (n−1) · SEM = SD ÷ √n<br><span class="credit">Made by Sant Kumar (COREGENIX)</span></footer>
+</div>
+
+<script>
+let groupCount = 0;
+const groupsEl = document.getElementById('groups');
+const resultsBench = document.getElementById('resultsBench');
+const resultsBody = document.getElementById('resultsBody');
+
+function addGroup(name, values){
+  groupCount++;
+  const id = groupCount;
+  const row = document.createElement('div');
+  row.className = 'group';
+  row.dataset.id = id;
+  row.innerHTML = `
+    <div class="tag">G${id}</div>
+    <div class="group-fields">
+      <input type="text" class="gname" placeholder="Group name (e.g. Vehicle, Day 21)" value="${name || ''}">
+      <textarea class="gvalues" placeholder="65.27, 69.01, 65.63, 69.64, 65.07, 66.74">${values || ''}</textarea>
+    </div>
+    <button class="remove-btn" title="remove group">remove</button>
+  `;
+  groupsEl.appendChild(row);
+  row.querySelector('.gname').addEventListener('input', recalc);
+  row.querySelector('.gvalues').addEventListener('input', recalc);
+  row.querySelector('.remove-btn').addEventListener('click', () => { row.remove(); recalc(); });
+}
+
+document.getElementById('addGroup').addEventListener('click', () => addGroup());
+
+function parseValues(text){
+  return text.split(/[,\n\t]+/).map(s => s.trim()).filter(s => s.length).map(Number).filter(n => !isNaN(n));
+}
+
+function stats(values){
+  const n = values.length;
+  const mean = values.reduce((a,b)=>a+b,0) / n;
+  const deviations = values.map(v => v - mean);
+  const squared = deviations.map(d => d*d);
+  const sumSq = squared.reduce((a,b)=>a+b,0);
+  const sd = n > 1 ? Math.sqrt(sumSq / (n-1)) : 0;
+  const sem = n > 0 ? sd / Math.sqrt(n) : 0;
+  return {n, mean, deviations, squared, sumSq, sd, sem};
+}
+
+function fmt(x, d=3){ return Number(x.toFixed(d)); }
+
+function recalc(){
+  const rows = [...groupsEl.querySelectorAll('.group')];
+  resultsBody.innerHTML = '';
+  let any = false;
+
+  rows.forEach((row, idx) => {
+    const name = row.querySelector('.gname').value.trim() || `Group ${idx+1}`;
+    const raw = row.querySelector('.gvalues').value;
+    const values = parseValues(raw);
+    if (values.length < 1) return;
+    any = true;
+    const s = stats(values);
+
+    const tr = document.createElement('tr');
+    const workId = `work-${row.dataset.id}`;
+
+    let workText = '';
+    if (s.n > 1) {
+      workText =
+`Sum: ${values.join(' + ')} = ${fmt(values.reduce((a,b)=>a+b,0))}
+Mean: ${fmt(values.reduce((a,b)=>a+b,0))} ÷ ${s.n} = ${fmt(s.mean)}
+Deviations from mean: ${s.deviations.map(d=>fmt(d,2)).join(', ')}
+Squared deviations: ${s.squared.map(d=>fmt(d,3)).join(', ')}
+Sum of squares: ${fmt(s.sumSq)}
+SD: √(${fmt(s.sumSq)} ÷ ${s.n-1}) = ${fmt(s.sd)}
+SEM: ${fmt(s.sd)} ÷ √${s.n} = ${fmt(s.sem)}`;
+    } else {
+      workText = `Only 1 value — SD and SEM require n ≥ 2.`;
+    }
+
+    const entryText = s.n > 1
+      ? `${fmt(s.mean,2)} ± ${fmt(s.sem,2)}`
+      : `${fmt(s.mean,2)} (n=1)`;
+
+    tr.innerHTML = `
+      <td class="group-name">${name}</td>
+      <td>${s.n}</td>
+      <td>
+        <span class="entry">${fmt(s.mean,2)}<span class="pm">±</span>${fmt(s.sem,2)}</span>
+        <button class="copy-btn" data-copy="${entryText}">copy</button>
+        <details>
+          <summary>show working</summary>
+          <div class="work">${workText}</div>
+        </details>
+      </td>
+      <td></td>
+    `;
+    resultsBody.appendChild(tr);
+  });
+
+  resultsBench.style.display = any ? 'block' : 'none';
+
+  resultsBody.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      navigator.clipboard.writeText(btn.dataset.copy).then(() => {
+        const old = btn.textContent;
+        btn.textContent = 'copied';
+        setTimeout(() => btn.textContent = old, 1000);
+      });
+    });
+  });
+}
+
+// seed with one example group matching the worked example
+addGroup('Group 1', '65.27, 69.01, 65.63, 69.64, 65.07, 66.74');
+recalc();
+</script>
+</body>
+</html>
